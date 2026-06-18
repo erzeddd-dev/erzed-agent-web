@@ -4,7 +4,7 @@
 
 const TIKTOK_CONFIG = {
     clientKey: "sbawe0zikwb3u4jas7",
-    redirectUri: "https://erzed-agent.vercel.app/dashboard.html",
+    redirectUri: "https://erzed-agent.vercel.app/",
     // Scopes: Login Kit + Content Posting API
     scope: "user.info.basic,user.info.profile,user.info.stats,video.list"
 };

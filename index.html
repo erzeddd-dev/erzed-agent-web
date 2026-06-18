@@ -61,5 +61,23 @@
         </div>
     </footer>
     <script src="script.js"></script>
+    <script>
+        // OAuth Callback Handler
+        // TikTok redirects back to this page (root URL) with ?code=xxx
+        // We detect it and forward to dashboard immediately
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const state = params.get('state');
+            const error = params.get('error');
+
+            if (code) {
+                // Got OAuth code from TikTok! Forward to dashboard
+                window.location.replace('dashboard.html?code=' + encodeURIComponent(code) + (state ? '&state=' + encodeURIComponent(state) : ''));
+            } else if (error) {
+                console.warn('TikTok OAuth error:', error);
+            }
+        })();
+    </script>
 </body>
 </html>
