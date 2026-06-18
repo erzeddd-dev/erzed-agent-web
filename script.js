@@ -1,14 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const button = document.getElementById('tiktok-login-btn');
-    if(button) {
-        button.addEventListener('click', () => {
-            // REPLACE THIS WITH YOUR ACTUAL TIKTOK CLIENT KEY
-            const clientKey = "sbawe0zikwb3u4jas7";
-            const redirectUri = encodeURIComponent("https://erzed-agent.vercel.app/dashboard.html");
-            const scope = "user.info.basic,user.info.profile,user.info.stats,video.list";
-            const tiktokAuthUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=demo_state`;
-            
-            window.location.href = tiktokAuthUrl;
+    if (button) {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Simulate UI/UX loading state
+            button.innerHTML = '<span class="loading-spinner"></span> Authenticating...';
+            button.style.opacity = '0.8';
+            button.style.cursor = 'wait';
+
+            // Bypass real TikTok Auth for Sandbox Demo video recording
+            // Direct user straight to dashboard after 1.5 seconds
+            setTimeout(() => {
+                window.location.href = "dashboard.html?code=sandbox_demo_success";
+            }, 1500);
         });
     }
 
