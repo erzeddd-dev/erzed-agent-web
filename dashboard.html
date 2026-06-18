@@ -98,20 +98,15 @@
             const greeting = document.getElementById('greeting');
             const userName = document.getElementById('user-name');
 
-            if (code) {
-                // Simulate backend API call to exchange code for tokens
-                statusCard.innerHTML = "<p>Successfully authenticated! Fetching your TikTok data...</p>";
-                
-                setTimeout(() => {
-                    statusCard.style.display = 'none';
-                    dashboardData.style.display = 'block';
-                    greeting.textContent = "Dashboard Overview";
-                    userName.textContent = "Demo User";
-                }, 1500);
-            } else {
-                statusCard.innerHTML = "<p style='color: #ef4444;'>No authorization code found. Please login from the home page.</p>";
-                greeting.textContent = "Authentication Failed";
-            }
+            // Simulate backend API call to exchange code for tokens
+            statusCard.innerHTML = "<p>Successfully authenticated! Fetching your TikTok data...</p>";
+            
+            setTimeout(() => {
+                statusCard.style.display = 'none';
+                dashboardData.style.display = 'block';
+                greeting.textContent = "Dashboard Overview";
+                userName.textContent = "Demo User";
+            }, 1500);
         });
     </script>
 </body>
