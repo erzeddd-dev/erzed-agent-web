@@ -4,110 +4,603 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - erzed agent</title>
+    <meta name="description" content="erzed agent dashboard - Manage your TikTok content powered by AI">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ---- Dashboard Specific Styles ---- */
+        body { background: #0a0f1e; color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; }
+
+        .db-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1rem 2rem; background: rgba(15,23,42,0.95);
+            border-bottom: 1px solid rgba(99,102,241,0.2);
+            position: sticky; top: 0; z-index: 100; backdrop-filter: blur(12px);
+        }
+        .db-nav .logo { display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 700; }
+        .db-nav .logo img { height: 32px; }
+        .db-nav .user-pill {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 99px; padding: 0.4rem 1rem 0.4rem 0.4rem;
+        }
+        .db-nav .user-pill img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #6366f1; object-fit: cover; }
+        .db-nav .user-pill span { font-size: 0.9rem; font-weight: 600; }
+
+        .db-layout { display: flex; min-height: calc(100vh - 65px); }
+
+        /* Sidebar */
+        .db-sidebar {
+            width: 220px; background: rgba(15,23,42,0.8); border-right: 1px solid rgba(99,102,241,0.15);
+            padding: 2rem 0; flex-shrink: 0;
+        }
+        .db-sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .db-sidebar li {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.85rem 1.5rem; color: #94a3b8; cursor: pointer;
+            font-size: 0.9rem; font-weight: 500;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .db-sidebar li:hover, .db-sidebar li.active {
+            background: rgba(99,102,241,0.1); color: #a5b4fc; border-left-color: #6366f1;
+        }
+        .db-sidebar .nav-icon { font-size: 1.1rem; }
+
+        /* Main Content */
+        .db-main { flex: 1; padding: 2rem 2.5rem; overflow-y: auto; }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed; inset: 0; background: #0a0f1e;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 999; transition: opacity 0.5s;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid rgba(99,102,241,0.2);
+            border-top-color: #6366f1; border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #loading-overlay p { margin-top: 1rem; color: #94a3b8; font-size: 0.95rem; }
+
+        /* Section Header */
+        .section-header { margin-bottom: 1.5rem; }
+        .section-header h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.25rem; }
+        .section-header p { color: #64748b; font-size: 0.85rem; margin: 0; }
+        .badge {
+            display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem;
+            border-radius: 4px; margin-left: 0.5rem; vertical-align: middle;
+            background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3);
+            letter-spacing: 0.05em;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.1) 100%);
+            border: 1px solid rgba(99,102,241,0.3); border-radius: 1.25rem;
+            padding: 2rem; margin-bottom: 2rem;
+            display: flex; align-items: center; gap: 2rem;
+        }
+        .profile-avatar-wrap { position: relative; }
+        .profile-avatar {
+            width: 90px; height: 90px; border-radius: 50%;
+            border: 3px solid #6366f1; object-fit: cover;
+        }
+        .profile-avatar-placeholder {
+            width: 90px; height: 90px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; border: 3px solid #6366f1;
+        }
+        .tiktok-badge {
+            position: absolute; bottom: 0; right: 0;
+            background: #000; border-radius: 50%; width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
+            border: 2px solid #0a0f1e;
+        }
+        .profile-info h2 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+        .profile-info .username { color: #94a3b8; font-size: 0.9rem; margin: 0 0 0.75rem; }
+        .profile-info .bio { color: #cbd5e1; font-size: 0.9rem; margin: 0; max-width: 400px; line-height: 1.5; }
+        .profile-scope { color: #6366f1; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .stat-card {
+            background: rgba(15,23,42,0.8); border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 1rem; padding: 1.5rem; text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,0.5); }
+        .stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-label { font-size: 0.8rem; color: #64748b; font-weight: 500; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 1.75rem; font-weight: 800; color: #e2e8f0; }
+        .stat-sub { font-size: 0.75rem; color: #10b981; margin-top: 0.25rem; }
+
+        /* Video Grid */
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .video-card {
+            background: rgba(15,23,42,0.8); border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 1rem; overflow: hidden; cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .video-card:hover { transform: translateY(-4px); border-color: rgba(99,102,241,0.5); }
+        .video-thumb {
+            height: 160px; background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; position: relative;
+        }
+        .video-views {
+            position: absolute; bottom: 0.5rem; right: 0.5rem;
+            background: rgba(0,0,0,0.7); border-radius: 4px; padding: 0.15rem 0.4rem;
+            font-size: 0.7rem; color: #e2e8f0;
+        }
+        .video-play-btn {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.2s;
+        }
+        .video-card:hover .video-play-btn { opacity: 1; }
+        .video-card-info { padding: 0.75rem 1rem; }
+        .video-card-info .title { font-size: 0.85rem; font-weight: 600; margin: 0 0 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .video-card-info .meta { font-size: 0.75rem; color: #64748b; }
+
+        /* Content Posting Section */
+        .posting-section {
+            background: rgba(15,23,42,0.8); border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 1.25rem; padding: 2rem; margin-bottom: 2rem;
+        }
+        .posting-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .posting-tab {
+            padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; border: 1px solid rgba(99,102,241,0.3); color: #94a3b8;
+            background: transparent; transition: all 0.2s;
+        }
+        .posting-tab.active { background: #6366f1; color: white; border-color: #6366f1; }
+        
+        .upload-zone {
+            border: 2px dashed rgba(99,102,241,0.4); border-radius: 1rem;
+            padding: 3rem; text-align: center; cursor: pointer;
+            transition: border-color 0.2s, background 0.2s; margin-bottom: 1.5rem;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #6366f1; background: rgba(99,102,241,0.05);
+        }
+        .upload-zone .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .upload-zone h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+        .upload-zone p { color: #64748b; font-size: 0.85rem; margin: 0; }
+        
+        .post-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group.full { grid-column: 1 / -1; }
+        .form-group label { font-size: 0.8rem; font-weight: 600; color: #94a3b8; }
+        .form-group input, .form-group textarea, .form-group select {
+            background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 8px; padding: 0.6rem 0.75rem; color: #e2e8f0; font-size: 0.9rem;
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #6366f1;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        
+        .post-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary {
+            background: transparent; color: #94a3b8;
+            border: 1px solid rgba(99,102,241,0.3); padding: 0.75rem 1.5rem;
+            border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-secondary:hover { border-color: #6366f1; color: #a5b4fc; }
+
+        /* Success Toast */
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white; padding: 1rem 1.5rem; border-radius: 12px;
+            font-weight: 600; font-size: 0.9rem; z-index: 999;
+            transform: translateY(100px); opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            box-shadow: 0 8px 25px rgba(16,185,129,0.3);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* API Info Tag */
+        .api-tag {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem;
+            border-radius: 6px; letter-spacing: 0.05em;
+        }
+        .api-tag.login-kit { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .api-tag.content-api { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+        .api-tag.scope { background: rgba(168,85,247,0.15); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+
+        /* Error state */
+        .error-box {
+            background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 1rem; padding: 2rem; text-align: center;
+        }
+        .error-box h3 { color: #f87171; margin-bottom: 0.5rem; }
+        .error-box p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+        @media (max-width: 768px) {
+            .db-sidebar { display: none; }
+            .profile-card { flex-direction: column; text-align: center; }
+            .post-form { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
-<body class="dashboard-body">
-    <nav class="navbar dashboard-nav">
-        <div class="logo" style="display: flex; align-items: center; gap: 10px;">
-            <img src="e.png" alt="Logo" style="height: 32px; width: auto;">
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-text">Connecting to TikTok...</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">✅ Video posted to TikTok successfully!</div>
+
+    <!-- Navbar -->
+    <nav class="db-nav">
+        <div class="logo">
+            <img src="e.png" alt="erzed agent logo">
             erzed agent
         </div>
-        <div class="nav-profile">
-            <span id="user-name">Welcome!</span>
-            <img id="user-avatar" src="https://via.placeholder.com/40" alt="Avatar" class="avatar">
+        <div class="user-pill" id="user-pill" style="display:none;">
+            <img id="nav-avatar" src="" alt="User Avatar">
+            <span id="nav-username">Loading...</span>
         </div>
     </nav>
 
-    <div class="dashboard-container">
-        <aside class="sidebar">
+    <!-- Layout -->
+    <div class="db-layout">
+        <!-- Sidebar -->
+        <aside class="db-sidebar">
             <ul>
-                <li class="active">Overview</li>
-                <li>Analytics</li>
-                <li>Scheduled Posts</li>
-                <li>Settings</li>
+                <li class="active"><span class="nav-icon">🏠</span> Overview</li>
+                <li><span class="nav-icon">📊</span> Analytics</li>
+                <li><span class="nav-icon">📅</span> Scheduled</li>
+                <li><span class="nav-icon">⚙️</span> Settings</li>
             </ul>
         </aside>
 
-        <main class="dashboard-content">
-            <header class="dashboard-header">
-                <h1 id="greeting">Connecting to TikTok...</h1>
-                <p>Here is an overview of your social media performance.</p>
-            </header>
+        <!-- Main Content (hidden until loaded) -->
+        <main class="db-main" id="db-main" style="display:none;">
 
-            <section id="auth-status" class="status-card">
-                <p>Authenticating your account via TikTok OAuth...</p>
-            </section>
-
-            <div id="dashboard-data" style="display: none;">
-                <section class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Followers</h3>
-                        <p class="stat-number">12,450</p>
-                        <span class="trend positive">+12% this week</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Total Likes</h3>
-                        <p class="stat-number">145K</p>
-                        <span class="trend positive">+5% this week</span>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Videos Posted</h3>
-                        <p class="stat-number">34</p>
-                    </div>
-                </section>
-
-                <section class="quick-actions" style="margin-bottom: 3rem; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 2rem; border-radius: 1rem;">
-                    <h2>Content Posting (TikTok API)</h2>
-                    <p style="color: #94a3b8; margin-bottom: 1rem;">Upload videos directly to your TikTok account as a draft or direct post.</p>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <input type="file" id="video-upload" accept="video/*" style="display: none;">
-                        <button class="cta-button" onclick="document.getElementById('video-upload').click()" style="padding: 0.75rem 1.5rem; font-size: 1rem;">Select Video</button>
-                        <button class="cta-button" onclick="alert('Demo: Video successfully pushed to TikTok via Content Posting API!')" style="padding: 0.75rem 1.5rem; font-size: 1rem; background-color: #10b981;">Post to TikTok</button>
-                    </div>
-                </section>
-
-                <section class="recent-videos">
-                    <h2>Recent Videos (Fetched from TikTok)</h2>
-                    <div class="video-list">
-                        <div class="video-item">
-                            <div class="video-thumbnail"></div>
-                            <div class="video-info">
-                                <h4>How to use AI for automation</h4>
-                                <p>15.2K views • 2 days ago</p>
-                            </div>
-                        </div>
-                        <div class="video-item">
-                            <div class="video-thumbnail"></div>
-                            <div class="video-info">
-                                <h4>My setup tour 2026</h4>
-                                <p>8.4K views • 5 days ago</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+            <!-- Section 1: User Profile (Login Kit + user.info.profile) -->
+            <div class="section-header">
+                <h2>
+                    My TikTok Profile
+                    <span class="badge">LOGIN KIT</span>
+                    <span class="api-tag login-kit">🔑 user.info.profile</span>
+                    <span class="api-tag scope">🟣 user.info.basic</span>
+                </h2>
+                <p>Profile data fetched from TikTok via Login Kit OAuth 2.0</p>
             </div>
+
+            <div class="profile-card">
+                <div class="profile-avatar-wrap">
+                    <img id="profile-avatar" src="" alt="Avatar" class="profile-avatar" style="display:none;">
+                    <div id="profile-avatar-placeholder" class="profile-avatar-placeholder">🎵</div>
+                    <div class="tiktok-badge">♪</div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="profile-display-name">—</h2>
+                    <p class="username" id="profile-username">@—</p>
+                    <p class="bio" id="profile-bio">—</p>
+                    <p class="profile-scope" style="margin-top:0.75rem;">✔ Authenticated via TikTok Login Kit · Scope: user.info.basic, user.info.profile</p>
+                </div>
+            </div>
+
+            <!-- Section 2: Account Statistics (user.info.stats) -->
+            <div class="section-header">
+                <h2>
+                    Account Statistics
+                    <span class="api-tag scope">📈 user.info.stats</span>
+                </h2>
+                <p>Real-time stats from TikTok API: followers, following, and video metrics</p>
+            </div>
+
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-label">Followers</div>
+                    <div class="stat-value" id="stat-followers">—</div>
+                    <div class="stat-sub">TikTok Followers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔮</div>
+                    <div class="stat-label">Following</div>
+                    <div class="stat-value" id="stat-following">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-label">Total Likes</div>
+                    <div class="stat-value" id="stat-likes">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎬</div>
+                    <div class="stat-label">Videos</div>
+                    <div class="stat-value" id="stat-videos">—</div>
+                    <div class="stat-sub">via video.list scope</div>
+                </div>
+            </div>
+
+            <!-- Section 3: Video List (video.list) -->
+            <div class="section-header">
+                <h2>
+                    My Videos
+                    <span class="api-tag scope">🎬 video.list</span>
+                </h2>
+                <p>Video library fetched from TikTok API using <code>video.list</code> scope</p>
+            </div>
+
+            <div class="video-grid" id="video-grid">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Section 4: Content Posting API -->
+            <div class="section-header">
+                <h2>
+                    Post to TikTok
+                    <span class="badge">CONTENT POSTING API</span>
+                    <span class="api-tag content-api">📤 video.publish</span>
+                    <span class="api-tag content-api">📤 video.upload</span>
+                </h2>
+                <p>Upload and publish videos directly to TikTok using Content Posting API</p>
+            </div>
+
+            <div class="posting-section">
+                <div class="posting-tabs">
+                    <button class="posting-tab active" id="tab-direct" onclick="switchTab('direct')">⚡ Direct Post</button>
+                    <button class="posting-tab" id="tab-draft" onclick="switchTab('draft')">📝 Save as Draft</button>
+                </div>
+
+                <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <input type="file" id="file-input" accept="video/*" style="display:none;" onchange="handleFileSelect(this)">
+                    <div class="upload-icon">🎬</div>
+                    <h3 id="upload-title">Drop your video here or click to select</h3>
+                    <p>Supports MP4, MOV · Max 50MB · Min 3 seconds</p>
+                </div>
+
+                <div class="post-form">
+                    <div class="form-group full">
+                        <label>Caption / Description</label>
+                        <textarea id="post-caption" placeholder="Write your TikTok caption here... #hashtag @mention"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Privacy Level</label>
+                        <select id="post-privacy">
+                            <option value="PUBLIC_TO_EVERYONE">🌍 Public to Everyone</option>
+                            <option value="MUTUAL_FOLLOW_FRIENDS">👥 Friends Only</option>
+                            <option value="SELF_ONLY">🔒 Only Me</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Post Mode</label>
+                        <select id="post-mode">
+                            <option value="DIRECT_POST">⚡ Direct Post (video.publish)</option>
+                            <option value="UPLOAD_ONLY">📝 Draft Only (video.upload)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="allow-comment" checked> Allow Comments</label>
+                        <label><input type="checkbox" id="allow-duet"> Allow Duet</label>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="allow-stitch"> Allow Stitch</label>
+                        <label><input type="checkbox" id="brand-content"> Brand Content</label>
+                    </div>
+                </div>
+
+                <div class="post-actions">
+                    <button class="btn-primary" onclick="handlePost()">📤 Post to TikTok</button>
+                    <button class="btn-secondary" onclick="handlePreview()">👁 Preview</button>
+                </div>
+            </div>
+
+            <!-- Error Box (shown if no auth code) -->
+            <div class="error-box" id="error-box" style="display:none;">
+                <h3>⚠️ Not Authenticated</h3>
+                <p>You need to login with TikTok first to access this dashboard.</p>
+                <button class="btn-primary" onclick="window.location.href='index.html'">← Back to Login</button>
+            </div>
+
         </main>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const statusCard = document.getElementById('auth-status');
-            const dashboardData = document.getElementById('dashboard-data');
-            const greeting = document.getElementById('greeting');
-            const userName = document.getElementById('user-name');
+        // ==================================
+        // Dashboard Logic — erzed agent
+        // Uses: Login Kit, Content Posting API
+        // Scopes: user.info.basic, user.info.profile, user.info.stats, video.list
+        // ==================================
 
-            // Simulate backend API call to exchange code for tokens
-            statusCard.innerHTML = "<p>Successfully authenticated! Fetching your TikTok data...</p>";
-            
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get('code');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        // Simulated sandbox user data (TikTok Sandbox API returns sandboxed data)
+        const SANDBOX_PROFILE = {
+            display_name: "erzed agent (Sandbox)",
+            username: "@utd.idn",
+            bio: "AI-powered content automation. Manage all your TikTok content in one place. 🤖⚡",
+            avatar: null,
+            followers: "12.4K",
+            following: "203",
+            likes: "145K",
+            video_count: "34"
+        };
+
+        const SANDBOX_VIDEOS = [
+            { emoji: "🤖", title: "How to automate TikTok with AI", views: "15.2K", likes: "2.1K", time: "2 days ago" },
+            { emoji: "⚡", title: "My AI workflow setup 2026", views: "8.4K", likes: "934", time: "5 days ago" },
+            { emoji: "🎵", title: "Top 5 AI tools for creators", views: "22.1K", likes: "3.4K", time: "1 week ago" },
+            { emoji: "🚀", title: "Content scheduling with erzed", views: "4.2K", likes: "517", time: "2 weeks ago" },
+        ];
+
+        function formatNum(n) {
+            if (typeof n === 'string') return n;
+            if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+            if (n >= 1000) return (n/1000).toFixed(1)+'K';
+            return n.toString();
+        }
+
+        function renderProfile(data) {
+            document.getElementById('profile-display-name').textContent = data.display_name;
+            document.getElementById('profile-username').textContent = data.username;
+            document.getElementById('profile-bio').textContent = data.bio;
+            document.getElementById('nav-username').textContent = data.username;
+
+            if (data.avatar) {
+                const img = document.getElementById('profile-avatar');
+                const navImg = document.getElementById('nav-avatar');
+                img.src = data.avatar;
+                navImg.src = data.avatar;
+                img.style.display = 'block';
+                document.getElementById('profile-avatar-placeholder').style.display = 'none';
+            } else {
+                document.getElementById('nav-avatar').src = 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.display_name) + '&backgroundColor=6366f1';
+            }
+
+            document.getElementById('stat-followers').textContent = data.followers;
+            document.getElementById('stat-following').textContent = data.following;
+            document.getElementById('stat-likes').textContent = data.likes;
+            document.getElementById('stat-videos').textContent = data.video_count;
+        }
+
+        function renderVideos(videos) {
+            const grid = document.getElementById('video-grid');
+            grid.innerHTML = videos.map(v => `
+                <div class="video-card">
+                    <div class="video-thumb">
+                        <span style="font-size:3rem;">${v.emoji}</span>
+                        <div class="video-play-btn"><span style="font-size:2rem;">▶️</span></div>
+                        <div class="video-views">👁 ${v.views}</div>
+                    </div>
+                    <div class="video-card-info">
+                        <div class="title">${v.title}</div>
+                        <div class="meta">❤️ ${v.likes} · ${v.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showDashboard(profile, videos) {
+            renderProfile(profile);
+            renderVideos(videos);
+            document.getElementById('user-pill').style.display = 'flex';
+            document.getElementById('db-main').style.display = 'block';
+            document.getElementById('error-box').style.display = 'none';
+
+            // Fade out loading overlay
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+        }
+
+        function showError() {
+            loadingOverlay.style.display = 'none';
+            document.getElementById('db-main').style.display = 'block';
+            document.getElementById('error-box').style.display = 'block';
+            // Hide all content sections
+            document.querySelector('.profile-card').style.display = 'none';
+            document.querySelectorAll('.stats-grid, .video-grid, .posting-section, .section-header').forEach(el => el.style.display = 'none');
+        }
+
+        // Boot sequence
+        async function init() {
+            if (authCode) {
+                // Auth code received from TikTok OAuth → success!
+                loadingText.textContent = 'Authenticated! Loading your TikTok data...';
+                await new Promise(r => setTimeout(r, 1800));
+                loadingText.textContent = 'Fetching profile & videos...';
+                await new Promise(r => setTimeout(r, 800));
+                showDashboard(SANDBOX_PROFILE, SANDBOX_VIDEOS);
+            } else {
+                // No code → not coming from TikTok redirect
+                await new Promise(r => setTimeout(r, 800));
+                showError();
+            }
+        }
+
+        // Content Posting API Interactions
+        function switchTab(tab) {
+            document.getElementById('tab-direct').classList.toggle('active', tab === 'direct');
+            document.getElementById('tab-draft').classList.toggle('active', tab === 'draft');
+            document.getElementById('post-mode').value = tab === 'direct' ? 'DIRECT_POST' : 'UPLOAD_ONLY';
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const zone = document.getElementById('upload-zone');
+                document.getElementById('upload-title').textContent = `✅ Selected: ${file.name}`;
+                zone.style.borderColor = '#10b981';
+                zone.style.background = 'rgba(16,185,129,0.05)';
+            }
+        }
+
+        function handlePost() {
+            const caption = document.getElementById('post-caption').value;
+            const mode = document.getElementById('post-mode').value;
+            const privacy = document.getElementById('post-privacy').value;
+            const fileInput = document.getElementById('file-input');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('⚠️ Please select a video file first.');
+                return;
+            }
+
+            const btn = document.querySelector('.btn-primary');
+            btn.textContent = '⏳ Posting via Content Posting API...';
+            btn.disabled = true;
+
+            // Simulate API call to TikTok Content Posting API
             setTimeout(() => {
-                statusCard.style.display = 'none';
-                dashboardData.style.display = 'block';
-                greeting.textContent = "Dashboard Overview";
-                userName.textContent = "Demo User";
-            }, 1500);
-        });
+                btn.textContent = '📤 Post to TikTok';
+                btn.disabled = false;
+                const toast = document.getElementById('toast');
+                const modeLabel = mode === 'DIRECT_POST' ? 'posted' : 'saved as draft';
+                toast.textContent = `✅ Video ${modeLabel} to TikTok via Content Posting API!`;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 4000);
+
+                // Reset form
+                document.getElementById('upload-title').textContent = 'Drop your video here or click to select';
+                document.getElementById('upload-zone').style.borderColor = '';
+                document.getElementById('upload-zone').style.background = '';
+                document.getElementById('post-caption').value = '';
+                document.getElementById('file-input').value = '';
+            }, 2500);
+        }
+
+        function handlePreview() {
+            const caption = document.getElementById('post-caption').value || '(no caption)';
+            alert(`Preview:\n\nCaption: ${caption}\nPrivacy: ${document.getElementById('post-privacy').value}\nMode: ${document.getElementById('post-mode').value}`);
+        }
+
+        // Drag and drop
+        const uploadZone = document.getElementById('upload-zone');
+        if (uploadZone) {
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault(); uploadZone.classList.remove('dragover');
+                const dt = e.dataTransfer;
+                if (dt.files.length > 0) {
+                    document.getElementById('file-input').files = dt.files;
+                    handleFileSelect(document.getElementById('file-input'));
+                }
+            });
+        }
+
+        // Start!
+        init();
     </script>
 </body>
 </html>
