@@ -22,9 +22,43 @@
             display: flex; align-items: center; gap: 0.75rem;
             background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
             border-radius: 99px; padding: 0.4rem 1rem 0.4rem 0.4rem;
+            cursor: pointer; position: relative; user-select: none;
+            transition: background 0.2s, border-color 0.2s;
         }
+        .db-nav .user-pill:hover { background: rgba(99,102,241,0.25); border-color: rgba(99,102,241,0.5); }
         .db-nav .user-pill img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #6366f1; object-fit: cover; }
         .db-nav .user-pill span { font-size: 0.9rem; font-weight: 600; }
+        .db-nav .user-pill .chevron { font-size: 0.75rem; color: #94a3b8; margin-left: 0.2rem; transition: transform 0.2s; }
+        .db-nav .user-pill.open .chevron { transform: rotate(180deg); }
+
+        /* Profile Dropdown */
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 12px); right: 0;
+            background: #0f172a; border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 16px; width: 260px; padding: 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            opacity: 0; transform: translateY(-8px); pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s; z-index: 200; overflow: hidden;
+        }
+        .profile-dropdown.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .dropdown-header {
+            padding: 1.25rem; background: linear-gradient(135deg, rgba(99,102,241,0.2) 0%, rgba(168,85,247,0.1) 100%);
+            border-bottom: 1px solid rgba(99,102,241,0.2);
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .dropdown-header img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #6366f1; object-fit: cover; }
+        .dropdown-header .dd-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.15rem; }
+        .dropdown-header .dd-username { color: #94a3b8; font-size: 0.8rem; }
+        .dropdown-body { padding: 0.75rem; }
+        .dropdown-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.7rem 0.75rem; border-radius: 10px; cursor: pointer;
+            font-size: 0.875rem; color: #94a3b8;
+            transition: background 0.15s, color 0.15s;
+        }
+        .dropdown-item:hover { background: rgba(99,102,241,0.1); color: #e2e8f0; }
+        .dropdown-item.danger:hover { background: rgba(239,68,68,0.1); color: #f87171; }
+        .dropdown-divider { height: 1px; background: rgba(99,102,241,0.15); margin: 0.5rem 0; }
 
         .db-layout { display: flex; min-height: calc(100vh - 65px); }
 
@@ -250,9 +284,32 @@
             <img src="e.png" alt="erzed agent logo">
             erzed agent
         </div>
-        <div class="user-pill" id="user-pill" style="display:none;">
+        <div id="user-pill" class="user-pill" style="display:none;" onclick="toggleDropdown()">
             <img id="nav-avatar" src="" alt="User Avatar">
             <span id="nav-username">Loading...</span>
+            <span class="chevron">▼</span>
+            <!-- Profile Dropdown -->
+            <div class="profile-dropdown" id="profile-dropdown">
+                <div class="dropdown-header">
+                    <img id="dd-avatar" src="" alt="Avatar">
+                    <div>
+                        <div class="dd-name" id="dd-name">—</div>
+                        <div class="dd-username" id="dd-username">—</div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <div class="dropdown-item" onclick="event.stopPropagation(); window.open('https://www.tiktok.com', '_blank')">
+                        ♪ View TikTok Profile
+                    </div>
+                    <div class="dropdown-item">
+                        ⚙️ Account Settings
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item danger" onclick="event.stopPropagation(); logout()">
+                        🚪 Logout
+                    </div>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -457,16 +514,27 @@
             document.getElementById('profile-bio').textContent = data.bio;
             document.getElementById('nav-username').textContent = data.username;
 
-            if (data.avatar) {
-                const img = document.getElementById('profile-avatar');
-                const navImg = document.getElementById('nav-avatar');
-                img.src = data.avatar;
-                navImg.src = data.avatar;
-                img.style.display = 'block';
-                document.getElementById('profile-avatar-placeholder').style.display = 'none';
-            } else {
-                document.getElementById('nav-avatar').src = 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(data.display_name) + '&backgroundColor=6366f1';
-            }
+            // Use DiceBear for avatar (personalized based on username)
+            const avatarUrl = data.avatar ||
+                `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(data.display_name)}&backgroundColor=6366f1&textColor=ffffff&radius=50`;
+
+            // Nav avatar
+            document.getElementById('nav-avatar').src = avatarUrl;
+
+            // Profile card avatar
+            const profileImg = document.getElementById('profile-avatar');
+            const placeholder = document.getElementById('profile-avatar-placeholder');
+            profileImg.src = avatarUrl;
+            profileImg.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            // Dropdown header
+            const ddAvatar = document.getElementById('dd-avatar');
+            const ddName = document.getElementById('dd-name');
+            const ddUsername = document.getElementById('dd-username');
+            if (ddAvatar) ddAvatar.src = avatarUrl;
+            if (ddName) ddName.textContent = data.display_name;
+            if (ddUsername) ddUsername.textContent = data.username;
 
             document.getElementById('stat-followers').textContent = data.followers;
             document.getElementById('stat-following').textContent = data.following;
@@ -501,6 +569,30 @@
             // Fade out loading overlay
             loadingOverlay.style.opacity = '0';
             setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+        }
+
+        // Toggle dropdown
+        function toggleDropdown() {
+            const pill = document.getElementById('user-pill');
+            const dropdown = document.getElementById('profile-dropdown');
+            pill.classList.toggle('open');
+            dropdown.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const pill = document.getElementById('user-pill');
+            if (pill && !pill.contains(e.target)) {
+                pill.classList.remove('open');
+                document.getElementById('profile-dropdown').classList.remove('open');
+            }
+        });
+
+        // Logout function
+        function logout() {
+            sessionStorage.clear();
+            localStorage.removeItem('tiktok_session');
+            window.location.href = 'index.html';
         }
 
         function showError() {
