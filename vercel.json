@@ -11,6 +11,10 @@
     {
       "source": "/dashboard.html/tiktokBb2zjtLHg7skaERWZoQjkMKnhJh7Idqo.txt",
       "destination": "/tiktokBb2zjtLHg7skaERWZoQjkMKnhJh7Idqo.txt"
+    },
+    {
+      "source": "/sample-video.mp4/tiktokfF51dGDwLIPoNRatpeEOKaLmXeNjw651.txt",
+      "destination": "/tiktokfF51dGDwLIPoNRatpeEOKaLmXeNjw651.txt"
     }
   ]
 }
