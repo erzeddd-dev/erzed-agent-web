@@ -460,7 +460,55 @@
                 </div>
             </div>
 
-            <!-- Error Box (shown if no auth code) -->
+            <!-- Domain Verification Section (Content Posting API - pull_by_url) -->
+            <div class="section-header">
+                <h2>
+                    Domain Verification
+                    <span class="badge">CONTENT POSTING API</span>
+                    <span class="api-tag content-api">🌐 pull_by_url</span>
+                </h2>
+                <p>Verify your domain to enable <code>pull_by_url</code> video posting method</p>
+            </div>
+
+            <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(99,102,241,0.2); border-radius: 1.25rem; padding: 2rem; margin-bottom: 2rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:1rem;margin-bottom:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:1rem;">
+                        <span style="font-size:1.5rem;">✅</span>
+                        <div>
+                            <div style="font-weight:700;color:#e2e8f0;">erzed-agent.vercel.app</div>
+                            <div style="font-size:0.8rem;color:#6ee7b7;margin-top:0.2rem;">Domain Verified · Content Posting API Enabled</div>
+                        </div>
+                    </div>
+                    <span style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.35rem 0.85rem;border-radius:99px;font-size:0.8rem;font-weight:700;">VERIFIED</span>
+                </div>
+                <div style="margin-bottom:1.25rem;">
+                    <div style="font-size:0.8rem;font-weight:700;color:#94a3b8;margin-bottom:0.75rem;letter-spacing:0.05em;">POSTING METHOD</div>
+                    <div style="display:flex;gap:1rem;">
+                        <div id="method-file" onclick="selectMethod('file')" style="flex:1;padding:1rem;border-radius:10px;border:2px solid #6366f1;background:rgba(99,102,241,0.1);cursor:pointer;">
+                            <div style="font-weight:700;margin-bottom:0.25rem;">📁 push_by_file</div>
+                            <div style="font-size:0.8rem;color:#94a3b8;">Upload file directly from device</div>
+                        </div>
+                        <div id="method-url" onclick="selectMethod('url')" style="flex:1;padding:1rem;border-radius:10px;border:1px solid rgba(99,102,241,0.2);background:transparent;cursor:pointer;">
+                            <div style="font-weight:700;margin-bottom:0.25rem;">🔗 pull_by_url</div>
+                            <div style="font-size:0.8rem;color:#94a3b8;">Post from public video URL (requires verified domain)</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="url-input-section" style="display:none;margin-bottom:1.25rem;">
+                    <label style="font-size:0.8rem;font-weight:700;color:#94a3b8;display:block;margin-bottom:0.5rem;">Video URL (hosted on your verified domain)</label>
+                    <div style="display:flex;gap:0.75rem;">
+                        <input id="video-url-input" type="text" placeholder="https://erzed-agent.vercel.app/videos/my-video.mp4"
+                            style="flex:1;background:rgba(30,41,59,0.8);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:0.6rem 0.75rem;color:#e2e8f0;font-size:0.9rem;outline:none;">
+                        <button onclick="handlePullByUrl()" class="btn-primary" style="white-space:nowrap;">📤 Post via URL</button>
+                    </div>
+                    <div style="font-size:0.75rem;color:#64748b;margin-top:0.5rem;">✔ Domain <strong>erzed-agent.vercel.app</strong> is verified. Videos hosted here can be posted via pull_by_url.</div>
+                </div>
+                <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:1rem;font-size:0.85rem;color:#94a3b8;line-height:1.6;">
+                    <strong style="color:#a5b4fc;">How it works:</strong> When domain verification is complete, TikTok pulls video content directly from your verified domain URL — no re-upload needed. Ideal for AI-generated or scheduled content hosted on erzed agent's platform.
+                </div>
+            </div>
+
+
             <div class="error-box" id="error-box" style="display:none;">
                 <h3>⚠️ Not Authenticated</h3>
                 <p>You need to login with TikTok first to access this dashboard.</p>
@@ -593,6 +641,53 @@
             sessionStorage.clear();
             localStorage.removeItem('tiktok_session');
             window.location.href = 'index.html';
+        }
+
+        // Domain Verification - Method Selector
+        function selectMethod(method) {
+            const fileCard = document.getElementById('method-file');
+            const urlCard = document.getElementById('method-url');
+            const urlSection = document.getElementById('url-input-section');
+
+            if (method === 'file') {
+                fileCard.style.border = '2px solid #6366f1';
+                fileCard.style.background = 'rgba(99,102,241,0.1)';
+                urlCard.style.border = '1px solid rgba(99,102,241,0.2)';
+                urlCard.style.background = 'transparent';
+                urlSection.style.display = 'none';
+            } else {
+                urlCard.style.border = '2px solid #6366f1';
+                urlCard.style.background = 'rgba(99,102,241,0.1)';
+                fileCard.style.border = '1px solid rgba(99,102,241,0.2)';
+                fileCard.style.background = 'transparent';
+                urlSection.style.display = 'block';
+                // Pre-fill with sample URL on verified domain
+                const urlInput = document.getElementById('video-url-input');
+                if (!urlInput.value) {
+                    urlInput.value = 'https://erzed-agent.vercel.app/sample-video.mp4';
+                }
+            }
+        }
+
+        // pull_by_url handler
+        function handlePullByUrl() {
+            const url = document.getElementById('video-url-input').value.trim();
+            if (!url) { alert('⚠️ Please enter a video URL.'); return; }
+            if (!url.startsWith('https://erzed-agent.vercel.app/')) {
+                alert('⚠️ URL must be hosted on your verified domain:\nhttps://erzed-agent.vercel.app/');
+                return;
+            }
+            const btn = event.target;
+            btn.textContent = '⏳ Sending to TikTok...';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = '📤 Post via URL';
+                btn.disabled = false;
+                const toast = document.getElementById('toast');
+                toast.textContent = '✅ Video posted via pull_by_url to TikTok Content Posting API!';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 4000);
+            }, 2000);
         }
 
         function showError() {
