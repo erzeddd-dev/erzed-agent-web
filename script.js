@@ -1,8 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const button = document.querySelector('.cta-button');
+    const button = document.getElementById('tiktok-login-btn');
     if(button) {
         button.addEventListener('click', () => {
-            alert('Welcome to erzed agent! In a real app, this would trigger the authentication flow.');
+            // REPLACE THIS WITH YOUR ACTUAL TIKTOK CLIENT KEY
+            const clientKey = "CLIENT_KEY_ANDA_DISINI"; 
+            const redirectUri = encodeURIComponent("https://erzed-agent.vercel.app/dashboard.html");
+            const scope = "user.info.basic,user.info.profile,user.info.stats,video.list";
+            const tiktokAuthUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=demo_state`;
+            
+            window.location.href = tiktokAuthUrl;
         });
     }
 

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - erzed agent</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-body">
+    <nav class="navbar dashboard-nav">
+        <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+            <img src="e.png" alt="Logo" style="height: 32px; width: auto;">
+            erzed agent
+        </div>
+        <div class="nav-profile">
+            <span id="user-name">Welcome!</span>
+            <img id="user-avatar" src="https://via.placeholder.com/40" alt="Avatar" class="avatar">
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <ul>
+                <li class="active">Overview</li>
+                <li>Analytics</li>
+                <li>Scheduled Posts</li>
+                <li>Settings</li>
+            </ul>
+        </aside>
+
+        <main class="dashboard-content">
+            <header class="dashboard-header">
+                <h1 id="greeting">Connecting to TikTok...</h1>
+                <p>Here is an overview of your social media performance.</p>
+            </header>
+
+            <section id="auth-status" class="status-card">
+                <p>Authenticating your account via TikTok OAuth...</p>
+            </section>
+
+            <div id="dashboard-data" style="display: none;">
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Followers</h3>
+                        <p class="stat-number">12,450</p>
+                        <span class="trend positive">+12% this week</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Likes</h3>
+                        <p class="stat-number">145K</p>
+                        <span class="trend positive">+5% this week</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Videos Posted</h3>
+                        <p class="stat-number">34</p>
+                    </div>
+                </section>
+
+                <section class="recent-videos">
+                    <h2>Recent Videos (Fetched from TikTok)</h2>
+                    <div class="video-list">
+                        <div class="video-item">
+                            <div class="video-thumbnail"></div>
+                            <div class="video-info">
+                                <h4>How to use AI for automation</h4>
+                                <p>15.2K views • 2 days ago</p>
+                            </div>
+                        </div>
+                        <div class="video-item">
+                            <div class="video-thumbnail"></div>
+                            <div class="video-info">
+                                <h4>My setup tour 2026</h4>
+                                <p>8.4K views • 5 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const statusCard = document.getElementById('auth-status');
+            const dashboardData = document.getElementById('dashboard-data');
+            const greeting = document.getElementById('greeting');
+            const userName = document.getElementById('user-name');
+
+            if (code) {
+                // Simulate backend API call to exchange code for tokens
+                statusCard.innerHTML = "<p>Successfully authenticated! Fetching your TikTok data...</p>";
+                
+                setTimeout(() => {
+                    statusCard.style.display = 'none';
+                    dashboardData.style.display = 'block';
+                    greeting.textContent = "Dashboard Overview";
+                    userName.textContent = "Demo User";
+                }, 1500);
+            } else {
+                statusCard.innerHTML = "<p style='color: #ef4444;'>No authorization code found. Please login from the home page.</p>";
+                greeting.textContent = "Authentication Failed";
+            }
+        });
+    </script>
+</body>
+</html>
