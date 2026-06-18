@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(button) {
         button.addEventListener('click', () => {
             // REPLACE THIS WITH YOUR ACTUAL TIKTOK CLIENT KEY
-            const clientKey = "CLIENT_KEY_ANDA_DISINI"; 
+            const clientKey = "CLIsbawe0zikwb3u4jas7"; 
             const redirectUri = encodeURIComponent("https://erzed-agent.vercel.app/dashboard.html");
             const scope = "user.info.basic,user.info.profile,user.info.stats,video.list";
             const tiktokAuthUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=${clientKey}&response_type=code&scope=${scope}&redirect_uri=${redirectUri}&state=demo_state`;
